@@ -27,27 +27,32 @@
     </form>
 
     <script>
-        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const formData = new FormData(e.target);
-            try {
-                const response = await fetch('http://localhost:3000', {
-                    method: 'POST',
-                    body: formData
-                });
+   const API_BASE_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:3000'  // Local backend
+    : 'https://your-vercel-api.vercel.app'; // Replace with your actual deployed backend URL
 
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
+document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-                const result = await response.json();
-                alert(result.message);
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Failed');
-            }
+    const formData = new FormData(e.target);
+    try {
+        const response = await fetch(`${API_BASE_URL}/upload`, { 
+            method: 'POST',
+            body: formData
         });
+
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+
+        const result = await response.json();
+        alert(result.message);
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to upload file');
+    }
+});
+
     </script>
 </body>
 </html>
