@@ -1,77 +1,39 @@
-const express = require('express');
-const multer = require('multer');
-const { google } = require('googleapis');
-const path = require('path');
-const fs = require('fs');
-const bodyParser = require('body-parser');
-const cors = require('cors');
+const {google} = require('googleapis');
 
-const app = express();
-const upload = multer({ dest: '/tmp' }); // Use `/tmp` for serverless compatibility
+// Load environment variables
+const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;
+const GOOGLE_PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n');
+const GOOGLE_PROJECT_ID = process.env.GOOGLE_PROJECT_ID;
 
-app.use(cors({
-  origin: '*',  // Allow requests from any frontend
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type']
-}));
+// Set up the Google API authentication using the service account
+const auth = new google.auth.JWT(
+  GOOGLE_CLIENT_EMAIL,   // Service account email
+  null,                  // No client secrets
+  GOOGLE_PRIVATE_KEY,    // Private key
+  ['https://www.googleapis.com/auth/drive'],  // Required scopes for Google Drive
+  null                   // No specific audience
+);
 
-const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
-const SERVICE_ACCOUNT_KEY_PATH = path.join(process.cwd(), 'credentials.json'); // Use process.cwd() to work with Vercel
+// Authenticate the API client
+google.options({auth});
 
-const auth = new google.auth.GoogleAuth({
-  keyFile: SERVICE_ACCOUNT_KEY_PATH,
-  scopes: SCOPES,
-});
-
-const drive = google.drive({ version: 'v3', auth });
-
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
-app.post('/upload', upload.single('file'), async (req, res) => {
-  // API logic for handling file upload
-});
- {
+// Example API route that lists files from Google Drive
+module.exports = async (req, res) => {
   try {
-    const { file } = req;
-    const { pages, printType, copies } = req.body;
+    const drive = google.drive({version: 'v3', auth});
+    const response = await drive.files.list({
+      pageSize: 10,
+      fields: 'nextPageToken, files(id, name)',
+    });
 
-    if (!file) {
-      return res.status(400).json({ message: 'No file uploaded' });
+    const files = response.data.files;
+    if (files.length) {
+      res.status(200).json({files});
+    } else {
+      res.status(404).json({message: 'No files found.'});
     }
-
-    const FOLDER_ID = '1N2y8WodHeYiqVkoWJYxTyeceKUtClynk'; // Replace with your Google Drive folder ID
-
-    const fileMetadata = {
-      name: file.originalname,
-      mimeType: file.mimetype,
-      parents: [FOLDER_ID],
-    };
-
-    const media = {
-      mimeType: file.mimetype,
-      body: fs.createReadStream(file.path),
-    };
-
-    const fileResponse = await drive.files.create({
-      resource: fileMetadata,
-      media: media,
-      fields: 'id',
-    });
-
-    console.log(`File uploaded: ${fileResponse.data.id}`);
-    res.json({ message: 'File uploaded and saved to Google Drive' });
-
-    fs.unlink(file.path, (err) => {
-      if (err) {
-        console.error('Error deleting file:', err);
-      }
-    });
-
   } catch (error) {
-    console.error('Error uploading file:', error);
-    res.status(500).json({ message: 'Error uploading file' });
+    console.error('Error listing files:', error);
+    res.status(500).json({error: 'Internal server error'});
   }
-});
-
-module.exports = app;
+};
