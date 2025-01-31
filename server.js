@@ -8,7 +8,7 @@ const cors = require('cors');
 
 // Initialize Express app
 const app = express();
-const upload = multer({ dest: 'uploads/' }); // Use 'uploads' folder for file storage (in memory or disk)
+const upload = multer({ dest: 'uploads' }); // Use 'uploads' folder for file storage (in memory or disk)
 
 // Enable CORS
 app.use(cors({
@@ -17,7 +17,7 @@ app.use(cors({
 
 // Google Drive API setup with service account credentials
 const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
-const SERVICE_ACCOUNT_KEY_PATH = './credentials.json';
+const SERVICE_ACCOUNT_KEY_PATH = 'credentials.json';
   // Replace with actual path to service account key
 
 const auth = new google.auth.GoogleAuth({
