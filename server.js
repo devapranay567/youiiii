@@ -11,10 +11,12 @@ const app = express();
 const upload = multer({ dest: '/tmp' }); // Use `/tmp` for serverless compatibility
 
 app.use(cors({
-  origin: '*', // Allow from anywhere — adjust later if needed
+  origin: '*',  // Allow requests from any frontend
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type']
 }));
+
+
 
 const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
 const SERVICE_ACCOUNT_KEY_PATH = path.join(__dirname, 'credentials.json');
