@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xerox Shop</title>
+</head>
+<body>
+    <h2>Upload Your Document</h2>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <label>No. of Pages:</label>
+        <input type="number" name="pages" required><br>
+
+        <label>Type:</label>
+        <select name="printType">
+            <option value="bw">Black & White</option>
+            <option value="color">Color</option>
+        </select><br>
+
+        <label>No. of Copies:</label>
+        <input type="number" name="copies" required><br>
+
+        <label>Upload File:</label>
+        <input type="file" name="file" required><br>
+
+        <button type="submit">Upload</button>
+    </form>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            try {
+                const response = await fetch('http://localhost:3000/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const result = await response.json();
+                alert(result.message);
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to upload file');
+            }
+        });
+    </script>
+</body>
+</html>
