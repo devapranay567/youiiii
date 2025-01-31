@@ -1,3 +1,4 @@
+// api/upload.js
 const express = require('express');
 const multer = require('multer');
 const { google } = require('googleapis');
@@ -6,19 +7,17 @@ const fs = require('fs');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
-// Initialize Express app
 const app = express();
-const upload = multer({ dest: 'uploads' }); // Use 'uploads' folder for file storage (in memory or disk)
+const upload = multer({ dest: '/tmp' }); // Use `/tmp` for serverless compatibility
 
-// Enable CORS
 app.use(cors({
-  origin: 'http://localhost:3000'
+  origin: '*', // Allow from anywhere — adjust later if needed
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type']
 }));
 
-// Google Drive API setup with service account credentials
 const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
-const SERVICE_ACCOUNT_KEY_PATH = 'credentials.json';
-  // Replace with actual path to service account key
+const SERVICE_ACCOUNT_KEY_PATH = path.join(__dirname, 'credentials.json');
 
 const auth = new google.auth.GoogleAuth({
   keyFile: SERVICE_ACCOUNT_KEY_PATH,
@@ -27,27 +26,24 @@ const auth = new google.auth.GoogleAuth({
 
 const drive = google.drive({ version: 'v3', auth });
 
-// Middleware to parse JSON and URL-encoded data
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Route to handle PDF uploads
 app.post('/upload', upload.single('file'), async (req, res) => {
   try {
     const { file } = req;
-    const { pages, printType, copies } = req.body;  // Retrieve form data
+    const { pages, printType, copies } = req.body;
 
     if (!file) {
       return res.status(400).send('No file uploaded');
     }
 
-    // Google Drive file metadata (with optional folder)
-    const FOLDER_ID = '1N2y8WodHeYiqVkoWJYxTyeceKUtClynk';  // Replace with your folder ID
+    const FOLDER_ID = '1N2y8WodHeYiqVkoWJYxTyeceKUtClynk';
 
     const fileMetadata = {
       name: file.originalname,
       mimeType: file.mimetype,
-      parents: [FOLDER_ID],  // Google Drive folder ID as an array
+      parents: [FOLDER_ID],
     };
 
     const media = {
@@ -55,37 +51,25 @@ app.post('/upload', upload.single('file'), async (req, res) => {
       body: fs.createReadStream(file.path),
     };
 
-    // Upload file to Google Drive
     const fileResponse = await drive.files.create({
       resource: fileMetadata,
       media: media,
       fields: 'id',
     });
 
-    // Log file metadata (can be saved to a DB or log for tracking)
     console.log(`File uploaded: ${fileResponse.data.id}`);
-    console.log(`Pages: ${pages}`);
-    console.log(`Print Type: ${printType}`);
-    console.log(`Copies: ${copies}`);
+    res.json({ message: 'File uploaded and saved to Google Drive' });
 
-    // Clean up the local file after upload
     fs.unlink(file.path, (err) => {
       if (err) {
         console.error('Error deleting file:', err);
       }
     });
 
-    // Send a success response
-    res.json({ message: 'File uploaded and saved to Google Drive' });
   } catch (error) {
-    console.error('Error uploading file:', error.response || error);
+    console.error('Error uploading file:', error);
     res.status(500).json({ message: 'Error uploading file' });
   }
 });
 
-// Start server
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
-
+module.exports = app;
