@@ -7,7 +7,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const app = express();
-const upload = multer({ dest: 'https://vercel.com/deva-pranays-projects/youiiii' }); // Use `/tmp` for serverless compatibility
+const upload = multer({ dest: '/tmp' }); // Use `/tmp` for serverless compatibility
 
 app.use(cors({
   origin: '*',  // Allow requests from any frontend
