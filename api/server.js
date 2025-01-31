@@ -12,7 +12,7 @@ const upload = multer({ dest: 'uploads/' }); // Use 'uploads' folder for file st
 
 // Enable CORS
 app.use(cors({
-  origin: 'http://localhost:3000'
+  origin: 'https://youiiii-git-main-deva-pranays-projects.vercel.app/'
 }));
 
 // Google Drive API setup with service account credentials
