@@ -28,7 +28,10 @@ const drive = google.drive({ version: 'v3', auth });
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.post('/api', upload.single('file'), async (req, res) => {
+app.post('/upload', upload.single('file'), async (req, res) => {
+  // API logic for handling file upload
+});
+ {
   try {
     const { file } = req;
     const { pages, printType, copies } = req.body;
